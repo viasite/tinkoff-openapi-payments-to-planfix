@@ -21,6 +21,8 @@
   },
   "homepage": "https://github.com/viasite/tinkoff-openapi-payments-to-planfix#readme",
   "dependencies": {
-    "axios": "^0.19.2"
+    "axios": "^0.19.2",
+    "lowdb": "^1.0.0",
+    "xml2js": "^0.4.23"
   }
 }

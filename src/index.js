@@ -1,5 +1,15 @@
 const axios = require('axios');
+const low = require('lowdb');
+const FileSync = require('lowdb/adapters/FileSync');
+
 const config = require('../.config.js');
+const planfixApi = require('./planfixApi');
+
+const adapter = new FileSync('db.json');
+const db = low(adapter);
+db.defaults({ payments: [] }).write();
+
+const isFirstRun = db.get('payments').value().length == 0;
 
 async function tinkoffRequest(path, request={}, method='get') {
   try {
@@ -55,6 +65,32 @@ async function getPayments() {
   console.log('Обороты входящих платежей: ', payments.income);
   console.log('Обороты исходящих платежей: ', payments.outcome);
 
+  for (let operation of payments.operation) {
+    await sendPayment(operation);
+  }
+  // console.log('payments: ', payments);
+}
+
+// Отправляет в Планфикс, если нужно
+async function sendPayment(operation) {
+  const foundPayment = db.get('payments')
+    .find({ date: operation.date, id: operation.id })
+    .value();
+  // console.log('foundPayment: ', foundPayment);
+
+  // уже известен
+  if (foundPayment) {
+    // console.log('Платёж уже известен');
+    return false;
+  }
+
+  db.get('payments')
+    .push(operation)
+    .write();
+
+  const isOut = operation.payerInn == config.tinkoff.inn;
+
+  console.log('\n\nПлатёж: ' + (isOut ? '-' : '+') + operation.amount);
   const operationNames = {
     id: 'Номер документа',
     // uin: 'Уникальный идентификатор платежа',
@@ -68,14 +104,64 @@ async function getPayments() {
     operationType: 'Вид операции',
     paymentPurpose: 'Назначение платежа',
   }
-  for (let operation of payments.operation) {
-    const isOut = operation.payerInn == config.tinkoff.inn;
-    console.log('\n\nПлатёж: ' + (isOut ? '-' : '+') + operation.amount);
-    for(let id in operationNames) {
-      console.log(`${operationNames[id]}: `, operation[id]);
-    }
+  for (let id in operationNames) {
+    console.log(`${operationNames[id]}: `, operation[id]);
   }
-  // console.log('payments: ', payments);
+
+  if (isOut) {
+    console.log('Исходящие платежи не отправляются в Планфикс');
+    return;
+  }
+
+  if (isFirstRun) {
+    console.log('Пока в истории запросов нет платажей, в ПФ ничего не отправляется.');
+    return;
+  }
+
+  const comment = `Входящий платёж от Тинькофф:<br><br>
+  <b>Сумма:</b> ${operation.amount}<br>
+  <b>Имя плательщика:</b> ${operation.payerName}<br>
+  <b>Назначение платежа:</b> ${operation.paymentPurpose}<br>;
+  <b>ИНН плательщика:</b> ${operation.payerInn}<br>
+  <b>Дата:</b> ${operation.date}<br>
+  <b>Номер документа:</b> ${operation.id}<br>
+  `;
+
+  const notifyList = config.planfix.notifyUsers.length > 0 ? { user: [ config.planfix.notifyUsers.map(uid => { return { id: uid } }) ]} : {};
+
+  // отправка в Планфикс
+  const request = {
+    action: {
+      task: { general: config.planfix.taskGeneral },
+      description: comment,
+      notifiedList: notifyList,
+      analitics: [{
+        analitic: {
+          id: config.planfix.analiticId,
+          analiticData: [
+            // сумма
+            { itemData: [
+              {
+                fieldId: config.planfix.fieldSumId,
+                value: operation.amount
+              },
+              // дата
+              {
+                fieldId: config.planfix.fieldDateId,
+                value: operation.chargeDate
+              },
+              // куда
+              {
+                fieldId: config.planfix.fieldToId,
+                value: config.planfix.fieldToValue
+              }
+            ]}
+          ]
+        }
+      }]
+    }
+  };
+  await planfixApi.request('action.add', request);
 }
 
 async function start() {

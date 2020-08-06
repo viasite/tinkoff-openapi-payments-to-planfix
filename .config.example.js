@@ -5,4 +5,20 @@ module.exports = {
     accountNumber: '', // номер счёта, получается тут - https://business.tinkoff.ru/openapi/docs#operation/getApiV1Bank-accounts, можно не указывать
     token: ''
   },
+  planfix: {
+    account: '',
+    api_url: 'https://api.planfix.ru/xml/',
+    api_key: '',
+    user_login: '',
+    user_password: '',
+
+    taskGeneral: 0, // номер задачи, сюда будут добавляться аналитики
+    analiticId: 0, // id аналитики
+    fieldSumId: 0, // id суммы
+    fieldDateId: 0, // id поля даты
+    fieldToId: 0, // id назначения
+    fieldToValue: 'Р/С Тинькофф', // значение назначения
+
+    notifyUsers: [0], // id юзеров, которых уведомить
+  }
 };
