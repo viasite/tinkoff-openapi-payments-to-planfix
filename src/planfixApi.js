@@ -197,7 +197,7 @@ module.exports = {
       { xmldec: { standalone: false } }
     );
 
-    console.log('xmlRequest:  ', xmlRequest);
+    // console.log('xmlRequest:  ', xmlRequest);
 
     const answer = await axios.request({
       url: config.planfix.api_url,
