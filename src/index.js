@@ -114,7 +114,7 @@ async function sendPayment(operation) {
   const comment = `Входящий платёж от Тинькофф:<br><br>
   <b>Сумма:</b> ${operation.amount}<br>
   <b>Имя плательщика:</b> ${operation.payerName}<br>
-  <b>Назначение платежа:</b> ${operation.paymentPurpose}<br>;
+  <b>Назначение платежа:</b> ${operation.paymentPurpose}<br>
   <b>ИНН плательщика:</b> ${operation.payerInn}<br>
   <b>Дата:</b> ${operation.date}<br>
   <b>Номер документа:</b> ${operation.id}<br>
@@ -138,32 +138,11 @@ async function sendPayment(operation) {
       description: comment,
       notifiedList: notifyList,
       analitics: [
-        {
-          analitic: {
-            id: config.planfix.analiticId,
-            analiticData: [
-              // сумма
-              {
-                itemData: [
-                  {
-                    fieldId: config.planfix.fieldSumId,
-                    value: operation.amount,
-                  },
-                  // дата
-                  {
-                    fieldId: config.planfix.fieldDateId,
-                    value: operation.chargeDate,
-                  },
-                  // куда
-                  {
-                    fieldId: config.planfix.fieldToId,
-                    value: config.planfix.fieldToValue,
-                  },
-                ],
-              },
-            ],
-          },
-        },
+        planfixApi.getAnaliticRequest(config.planfix.analiticId, {
+          [config.planfix.fieldSumId]:  operation.amount, // сумма
+          [config.planfix.fieldDateId]: operation.chargeDate, // дата
+          [config.planfix.fieldToId]:   config.planfix.fieldToValue, // куда
+        })
       ],
     },
   };

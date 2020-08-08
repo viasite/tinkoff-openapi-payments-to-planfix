@@ -228,6 +228,27 @@ module.exports = {
     return result;
   },
 
+  getAnaliticRequest(analiticId, fields) {
+    let items = []
+    for (let fId in fields) {
+      items.push({
+        fieldId: fId,
+        value: fields[fId]
+      });
+    }
+
+    return {
+      analitic: {
+        id: analiticId,
+        analiticData: [
+          {
+            itemData: items,
+          },
+        ],
+      },
+    }
+  },
+
   getTaskUrl(generalId) {
     return `https://${config.planfix.account}.planfix.ru/task/${generalId}`;
   },
