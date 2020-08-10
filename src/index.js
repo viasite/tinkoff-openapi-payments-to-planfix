@@ -35,7 +35,7 @@ async function tinkoffRequest(path, request = {}, method = 'get') {
     // console.log('data: ', data);
     return data;
   } catch (error) {
-    console.log(`error ${path}: ${error.response.status}: ${error.response.data}`);
+    console.error(`error ${path}: ${error.response.status}:  ${JSON.stringify(error.response.data)}`);
     return false;
   }
 }
@@ -61,6 +61,8 @@ async function getPayments() {
   console.log('Баланс на конец периода: ', payments.saldoOut);
   console.log('Обороты входящих платежей: ', payments.income);
   console.log('Обороты исходящих платежей: ', payments.outcome); */
+
+  if (!payments) return;
 
   for (let operation of payments.operation) {
     await sendPayment(operation);
