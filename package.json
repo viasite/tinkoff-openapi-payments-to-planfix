@@ -1,10 +1,14 @@
 {
   "name": "tinkoff-openapi-payments-to-planfix",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Получает платежи на счёте компании и перенаправляет в Планфикс",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "version": "npm run changelog && git add CHANGELOG.md",
+    "postversion": "git push && npm run release",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "release": "conventional-github-releaser -p angular"
   },
   "repository": {
     "type": "git",
