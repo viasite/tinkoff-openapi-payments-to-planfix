@@ -133,10 +133,14 @@ async function sendPayment(operation) {
         }
       : {};
 
+  // если найдена задача, то отправляем аналитику в неё
+  const foundTask = await getPaymentTask(operation);
+  const taskGeneral = foundTask ? foundTask.general : config.planfix.taskGeneral;
+
   // отправка в Планфикс
   const request = {
     action: {
-      task: { general: config.planfix.taskGeneral },
+      task: { general: taskGeneral },
       description: comment,
       notifiedList: notifyList,
       analitics: [
@@ -151,8 +155,76 @@ async function sendPayment(operation) {
   await planfixApi.request('action.add', request);
 }
 
+const taskFilters = (date, payNum) => {
+  const taskConfig = config.planfix.paymentTask;
+
+  const filters = [];
+  filters.push({
+    filter: {
+      type: 102, // число
+      operator: 'equal',
+      value: payNum,
+      field: taskConfig.fieldPaymentNumberId,
+    }
+  });
+  filters.push({
+    filter: {
+      type: 103, // дата
+      operator: 'equal',
+      value: date,
+      field: taskConfig.fieldDateId,
+    }
+  });
+
+  return filters;
+};
+
+// находит задачу по реквизитам платежа: дата и номер
+async function getPaymentTask(operation) {
+  const info = parsePaymentPurpose(operation.paymentPurpose);
+  if (!info.date || !info.payNum) return false;
+  // console.log(`найден платёж №${info.payNum} от ${info.date}`);
+
+  const request = {
+    filters: taskFilters(info.date, info.payNum)
+  };
+  res = await planfixApi.request('task.getList', request);
+
+  // если 1 задача, то победа
+  if (res.tasks.$.totalCount == 1) {
+    return res.tasks.task;
+  }
+  return false;
+}
+
+function parsePaymentPurpose(msg) {
+  const info = {};
+  let res;
+
+  // оплата по счету № 1 от 11.11.11г
+  if (res = msg.match(/№\s*(\d+)\s+от\s+(\d+)\.(\d+)\.(\d+)/)) {
+    let day = parseInt(res[2]);
+    let month = parseInt(res[3]);
+    let year = parseInt(res[4]);
+    if (year < 100) year += 2000; // 21г.
+
+    const d = new Date(year, month - 1, day).toISOString();
+
+    info.date = `${d.substring(8, 10)}-${d.substring(5, 7)}-${d.substring(0, 4)}`;
+    info.payNum = res[1];
+  }
+  return info;
+}
+
 async function start() {
   await getPayments();
+  // testPaymentTaskSearch();
+}
+
+async function testPaymentTaskSearch() {
+  const operation = db.get('payments').find({ date: '2021-02-11', id: '21' }).value();
+  const task = await getPaymentTask(operation);
+  console.log('task: ', task);
 }
 
 start();

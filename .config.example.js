@@ -19,6 +19,11 @@ module.exports = {
     fieldToId: 0, // id назначения
     fieldToValue: 'Р/С Тинькофф', // значение назначения
 
+    paymentTask: {
+      fieldDateId: 0, // дата счета
+      fieldPaymentNumberId: 0, // номер счета
+    },
+
     notifyUsers: [0], // id юзеров, которых уведомить
   }
 };
