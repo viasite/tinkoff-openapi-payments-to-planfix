@@ -183,7 +183,7 @@ const taskFilters = (date, payNum) => {
 async function getPaymentTask(operation) {
   const info = parsePaymentPurpose(operation.paymentPurpose);
   if (!info.date || !info.payNum) return false;
-  // console.log(`найден платёж №${info.payNum} от ${info.date}`);
+  console.log(`Найден счёт: №${info.payNum} от ${info.date}`);
 
   const request = {
     filters: taskFilters(info.date, info.payNum)
@@ -192,6 +192,7 @@ async function getPaymentTask(operation) {
 
   // если 1 задача, то победа
   if (res.tasks.$.totalCount == 1) {
+    console.log('Найдена задача: ' + planfixApi.getTaskUrl(res.tasks.task.general));
     return res.tasks.task;
   }
   return false;
@@ -201,18 +202,47 @@ function parsePaymentPurpose(msg) {
   const info = {};
   let res;
 
+  msg = msg.replace(/\//g, '.'); // 11/11/11 -> 11.11.11
+
   // оплата по счету № 1 от 11.11.11г
-  if (res = msg.match(/№\s*(\d+)\s+от\s+(\d+)\.(\d+)\.(\d+)/)) {
-    let day = parseInt(res[2]);
-    let month = parseInt(res[3]);
-    let year = parseInt(res[4]);
+  // оплата по счету 1 от 11.11.11г
+  // оплата по сч. 1 от 11 ноября 11г
+  if (res = msg.match(/(сч\.|счет.*?|№)\s*(\d+)\s+от\s+(\d+)(\.\d+\.|\s+[а-я]+\s+)(\d+)/)) {
+    let day = parseInt(res[3]);
+
+    let monthStr = res[4].replace(/\./g, '').trim();
+    let month = parseInt(monthStr);
+
+    // месяц прописью
+    if (!month) {
+      const monthMap = {
+        'января': 1,
+        'февраля': 2,
+        'марта': 3,
+        'апреля': 4,
+        'мая': 5,
+        'июня': 6,
+        'июля': 7,
+        'августа': 8,
+        'сентября': 9,
+        'октября': 10,
+        'ноября': 11,
+        'декабря': 12,
+      }
+      if (monthMap[monthStr]) month = monthMap[monthStr];
+    }
+
+    let year = parseInt(res[5]);
     if (year < 100) year += 2000; // 21г.
 
-    const d = new Date(year, month - 1, day).toISOString();
+    const d = new Date(year, month - 1, day, 12).toISOString(); // 12, чтобы часовой пояс не поменял день
 
     info.date = `${d.substring(8, 10)}-${d.substring(5, 7)}-${d.substring(0, 4)}`;
-    info.payNum = res[1];
+    info.payNum = res[2];
+
+    if (!month) delete(info.date);
   }
+
   return info;
 }
 
@@ -222,9 +252,21 @@ async function start() {
 }
 
 async function testPaymentTaskSearch() {
-  const operation = db.get('payments').find({ date: '2021-02-11', id: '21' }).value();
-  const task = await getPaymentTask(operation);
-  console.log('task: ', task);
+  const purposes = require('../data/payments-test');
+  let stats = {
+    total: purposes.length,
+    success: 0,
+  }
+  for (let purpose of purposes) {
+    const info = parsePaymentPurpose(purpose);
+    if (info.date && info.payNum) stats.success++;
+    else console.log(purpose);
+  }
+  console.log('stats: ', stats);
+
+  // const operation = db.get('payments').find({ date: '2021-02-11', id: '21' }).value();
+  // const task = await getPaymentTask(operation);
+  // console.log('task: ', task);
 }
 
 start();
