@@ -158,23 +158,25 @@ async function sendPayment(operation) {
 const taskFilters = (date, payNum) => {
   const taskConfig = config.planfix.paymentTask;
 
-  const filters = [];
-  filters.push({
-    filter: {
-      type: 102, // число
-      operator: 'equal',
-      value: payNum,
-      field: taskConfig.fieldPaymentNumberId,
-    }
-  });
-  filters.push({
-    filter: {
-      type: 103, // дата
-      operator: 'equal',
-      value: date,
-      field: taskConfig.fieldDateId,
-    }
-  });
+  const filters = {
+    filter: [
+      {
+        type: 102, // число
+        operator: 'equal',
+        value: payNum,
+        field: taskConfig.fieldPaymentNumberId,
+      },
+      {
+        type: 103, // дата
+        operator: 'equal',
+        value: {
+          datetype: 'anotherdate',
+          datefrom: date,
+        },
+        field: taskConfig.fieldDateId,
+      }
+    ],
+  };
 
   return filters;
 };
@@ -194,6 +196,10 @@ async function getPaymentTask(operation) {
   if (res.tasks.$.totalCount == 1) {
     console.log('Найдена задача: ' + planfixApi.getTaskUrl(res.tasks.task.general));
     return res.tasks.task;
+  } else {
+    const tasks = res.tasks.task.map(task => planfixApi.getTaskUrl(task.general));
+    console.log(`Найдено задач: ${res.tasks.$.totalCount}`);
+    console.log(tasks.join('\n'));
   }
   return false;
 }
