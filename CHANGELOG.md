@@ -1,3 +1,12 @@
+## [1.1.1](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/compare/v1.1.0...v1.1.1) (2021-04-23)
+
+
+### Bug Fixes
+
+* платежи не приходили в общую задачу ([4e609ff](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/commit/4e609ff))
+
+
+
 # [1.1.0](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/compare/v1.0.0...v1.1.0) (2021-04-13)
 
 

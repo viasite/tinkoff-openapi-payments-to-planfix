@@ -1,6 +1,6 @@
 {
   "name": "tinkoff-openapi-payments-to-planfix",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Получает платежи на счёте компании и перенаправляет в Планфикс",
   "main": "src/index.js",
   "scripts": {
