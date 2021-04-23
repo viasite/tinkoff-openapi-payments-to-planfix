@@ -11,6 +11,8 @@ db.defaults({ payments: [] }).write();
 
 const isFirstRun = db.get('payments').value().length == 0;
 
+let searchTaskComment = '';
+
 async function tinkoffRequest(path, request = {}, method = 'get') {
   try {
     const answer = await axios.request({
@@ -81,6 +83,7 @@ async function sendPayment(operation) {
     return false;
   }
 
+  // write payment
   db.get('payments').push(operation).write();
 
   const isOut = operation.payerInn == config.tinkoff.inn;
@@ -113,13 +116,18 @@ async function sendPayment(operation) {
     return;
   }
 
+  // если найдена задача, то отправляем аналитику в неё
+  const foundTask = await getPaymentTask(operation);
+  const taskGeneral = foundTask ? foundTask.general : config.planfix.taskGeneral;
+
   const comment = `Входящий платёж от Тинькофф:<br><br>
   <b>Сумма:</b> ${operation.amount}<br>
   <b>Имя плательщика:</b> ${operation.payerName}<br>
   <b>Назначение платежа:</b> ${operation.paymentPurpose}<br>
   <b>ИНН плательщика:</b> ${operation.payerInn}<br>
   <b>Дата:</b> ${operation.date}<br>
-  <b>Номер документа:</b> ${operation.id}<br>
+  <b>Номер документа:</b> ${operation.id}<br><br>
+  ${searchTaskComment}<br>
   `;
 
   const notifyList =
@@ -132,10 +140,6 @@ async function sendPayment(operation) {
           ],
         }
       : {};
-
-  // если найдена задача, то отправляем аналитику в неё
-  const foundTask = await getPaymentTask(operation);
-  const taskGeneral = foundTask ? foundTask.general : config.planfix.taskGeneral;
 
   // отправка в Планфикс
   const request = {
@@ -196,10 +200,21 @@ async function getPaymentTask(operation) {
   if (res.tasks.$.totalCount == 1) {
     console.log('Найдена задача: ' + planfixApi.getTaskUrl(res.tasks.task.general));
     return res.tasks.task;
-  } else {
+  }
+  // если 0
+  else if (res.tasks.$.totalCount == 0) {
+    const msg = `Задача на оплату не найдена`;
+    searchTaskComment = msg;
+    console.log(msg);
+    return false;
+  }
+  // если больше 1
+  else {
     const tasks = res.tasks.task.map(task => planfixApi.getTaskUrl(task.general));
-    console.log(`Найдено задач: ${res.tasks.$.totalCount}`);
-    console.log(tasks.join('\n'));
+
+    const msg = `Найдено задач: ${res.tasks.$.totalCount}\n` + tasks.join('\n');
+    searchTaskComment = msg.replace(/\n/g, '<br>');
+    console.log(msg);
   }
   return false;
 }
@@ -254,7 +269,9 @@ function parsePaymentPurpose(msg) {
 
 async function start() {
   await getPayments();
+
   // testPaymentTaskSearch();
+  // testSendPayment();
 }
 
 async function testPaymentTaskSearch() {
@@ -273,6 +290,11 @@ async function testPaymentTaskSearch() {
   // const operation = db.get('payments').find({ date: '2021-02-11', id: '21' }).value();
   // const task = await getPaymentTask(operation);
   // console.log('task: ', task);
+}
+
+async function testSendPayment() {
+  const op = {}; // скопировать из db.json
+  sendPayment(op);
 }
 
 start();
