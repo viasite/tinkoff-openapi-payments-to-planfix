@@ -187,6 +187,7 @@ const taskFilters = (date, payNum) => {
 
 // находит задачу по реквизитам платежа: дата и номер
 async function getPaymentTask(operation) {
+  searchTaskComment = '';
   const info = parsePaymentPurpose(operation.paymentPurpose);
   if (!info.date || !info.payNum) return false;
   console.log(`Найден счёт: №${info.payNum} от ${info.date}`);
