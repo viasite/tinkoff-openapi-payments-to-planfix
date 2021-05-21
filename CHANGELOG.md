@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/compare/v1.1.1...v1.2.0) (2021-05-21)
+
+
+### Bug Fixes
+
+* очистка коммента о нахождении задачи ([d510a2e](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/commit/d510a2e))
+
+
+### Features
+
+* баланс, npm run balance ([fd678c5](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/commit/fd678c5))
+
+
+
 ## [1.1.1](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/compare/v1.1.0...v1.1.1) (2021-04-23)
 
 
