@@ -123,6 +123,7 @@ async function sendPayment(operation) {
           [config.planfix.fieldSumId]:  operation.amount, // сумма
           [config.planfix.fieldDateId]: operation.chargeDate, // дата
           [config.planfix.fieldToId]:   config.planfix.fieldToValue, // куда
+          [config.planfix.fieldPurposeId]:   operation.paymentPurpose, // куда
         })
       ],
     },

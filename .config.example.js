@@ -17,7 +17,8 @@ module.exports = {
     analiticId: 0, // id аналитики
     fieldSumId: 0, // id суммы
     fieldDateId: 0, // id поля даты
-    fieldToId: 0, // id назначения
+    fieldToId: 0, // id назначения куда
+    fieldPurposeId: 0, // id назначение платежа
     fieldToValue: 'Р/С Тинькофф', // значение назначения
 
     paymentTask: {
