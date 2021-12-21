@@ -1,4 +1,5 @@
 module.exports = {
+  debug: false,
   tinkoff: {
     apiUrl: 'https://business.tinkoff.ru/openapi/api/v1',
     inn: '', // по ИНН определяются входящие/исходящие

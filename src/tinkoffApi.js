@@ -25,7 +25,8 @@ async function tinkoffRequest(path, request = {}, method = 'get') {
     // console.log('data: ', data);
     return data;
   } catch (error) {
-    console.error(`error ${path}: ${error.response.status}:  ${JSON.stringify(error.response.data)}`);
+    if (error.response) console.error(`error ${path}: ${error.response.status}:  ${JSON.stringify(error.response.data)}`);
+    else console.error(error);
     return false;
   }
 }

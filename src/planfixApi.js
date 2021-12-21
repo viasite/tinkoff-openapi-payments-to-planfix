@@ -112,6 +112,10 @@ const errorCodes = {
   '11001': 'Указанной подписки не существует',
 };
 
+function debug(msg) {
+  if (config.debug) console.log(msg);
+}
+
 module.exports = {
   sid: null,
   async init() {
@@ -197,7 +201,8 @@ module.exports = {
       { xmldec: { standalone: false } }
     );
 
-    // console.log('xmlRequest:  ', xmlRequest);
+    debug('Planfix xmlRequest:')
+    debug(xmlRequest);
 
     const answer = await axios.request({
       url: config.planfix.api_url,
@@ -219,7 +224,8 @@ module.exports = {
       explicitRoot: false,
       explicitArray: false,
     });
-    // console.log('result: ', result);
+    debug('Planfix result:')
+    debug(result);
 
     if (!this.checkAnswer(result)) {
       console.error('Ошибка при выполнении запроса');

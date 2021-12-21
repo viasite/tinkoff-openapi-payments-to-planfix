@@ -13,7 +13,27 @@ const isFirstRun = db.get('payments').value().length == 0;
 
 let searchTaskComment = '';
 
+async function start() {
+  // testPaymentTaskSearch();
+  // testSendPayment();
+  // return;
+
+  console.log(new Date());
+  const payments = await getPayments();
+  if (!payments) return;
+
+  for (let operation of payments.operation) {
+    await sendPayment(operation);
+  }
+  // console.log('payments: ', payments);
+}
+
+function debug(a) {
+  if (config.debug) console.log(a);
+}
+
 async function getPayments() {
+  debug('Tinkoff: getPayments');
   // получаем номер счёта, если его нет в конфиге
   let accountNumber = config.tinkoff.accountNumber;
   if (!config.tinkoff.accountNumber) {
@@ -28,19 +48,7 @@ async function getPayments() {
   const payments = await tinkoffRequest('/bank-statement', {
     accountNumber: accountNumber,
   });
-
-  console.log(new Date());
-  /* console.log('Баланс на начало периода: ', payments.saldoIn);
-  console.log('Баланс на конец периода: ', payments.saldoOut);
-  console.log('Обороты входящих платежей: ', payments.income);
-  console.log('Обороты исходящих платежей: ', payments.outcome); */
-
-  if (!payments) return;
-
-  for (let operation of payments.operation) {
-    await sendPayment(operation);
-  }
-  // console.log('payments: ', payments);
+  return payments;
 }
 
 // Отправляет в Планфикс, если нужно
@@ -48,14 +56,15 @@ async function sendPayment(operation) {
   const foundPayment = db.get('payments').find({ date: operation.date, id: operation.id }).value();
   // console.log('foundPayment: ', foundPayment);
 
-  // уже известен
-  if (foundPayment) {
-    // console.log('Платёж уже известен');
-    return false;
+  const writePayment = () => {
+    db.get('payments').push(operation).write();
   }
 
-  // write payment
-  db.get('payments').push(operation).write();
+  // уже известен
+  if (foundPayment) {
+    debug('Платёж уже известен: ' + operation.id);
+    return false;
+  }
 
   const isOut = operation.payerInn == config.tinkoff.inn;
 
@@ -78,6 +87,7 @@ async function sendPayment(operation) {
   }
 
   if (isOut) {
+    writePayment();
     console.log('Исходящие платежи не отправляются в Планфикс');
     return;
   }
@@ -89,6 +99,7 @@ async function sendPayment(operation) {
 
   // если найдена задача, то отправляем аналитику в неё
   const foundTask = await getPaymentTask(operation);
+  console.log(searchTaskComment); // его генерит getPaymentTask
   const taskGeneral = foundTask ? foundTask.general : config.planfix.taskGeneral;
 
   const comment = `Входящий платёж от Тинькофф:<br><br>
@@ -128,10 +139,11 @@ async function sendPayment(operation) {
       ],
     },
   };
-  await planfixApi.request('action.add', request);
+  const result = await planfixApi.request('action.add', request);
+  writePayment();
 }
 
-const taskFilters = (date, payNum) => {
+function taskFilters (date, payNum) {
   const taskConfig = config.planfix.paymentTask;
 
   const filters = {
@@ -167,7 +179,7 @@ async function getPaymentTask(operation) {
   const request = {
     filters: taskFilters(info.date, info.payNum)
   };
-  res = await planfixApi.request('task.getList', request);
+  const res = await planfixApi.request('task.getList', request);
 
   // если 1 задача, то победа
   if (res.tasks.$.totalCount == 1) {
@@ -192,6 +204,7 @@ async function getPaymentTask(operation) {
   return false;
 }
 
+// находит дату платежа и номер счёта
 function parsePaymentPurpose(msg) {
   const info = {};
   let res;
@@ -238,13 +251,6 @@ function parsePaymentPurpose(msg) {
   }
 
   return info;
-}
-
-async function start() {
-  await getPayments();
-
-  // testPaymentTaskSearch();
-  // testSendPayment();
 }
 
 async function testPaymentTaskSearch() {
