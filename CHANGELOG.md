@@ -1,3 +1,18 @@
+# [1.3.0](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/compare/v1.2.0...v1.3.0) (2021-12-24)
+
+
+### Bug Fixes
+
+* платежи не уходят в Планфикс, debug mode ([4871e91](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/commit/4871e91))
+* **balance:** вычитание овердрафта из баланса ([14602d4](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/commit/14602d4))
+
+
+### Features
+
+* назначение платежа как поле оплаты ([fc8deae](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/commit/fc8deae))
+
+
+
 # [1.2.0](https://github.com/viasite/tinkoff-openapi-payments-to-planfix/compare/v1.1.1...v1.2.0) (2021-05-21)
 
 
